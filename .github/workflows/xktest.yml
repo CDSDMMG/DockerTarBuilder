@@ -31,6 +31,10 @@ jobs:
             gzip -c "${image_name}-amd64.tar" > "${image_name}-amd64.tar.gz"
             rm "${image_name}-amd64.tar"
           done
+    - name: Generate timestamp
+      id: timestamp    
+      run: echo "TIMESTAMP=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
+      
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
