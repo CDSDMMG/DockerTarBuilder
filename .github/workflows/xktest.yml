@@ -20,6 +20,7 @@ jobs:
           docker system prune -a -f
           docker volume prune -f
     - name: Pull Docker Images and Package
+      id: pull_and_save
       run: |
         images="${{ github.event.inputs.docker_images }}"
           IFS=',' read -r -a image_array <<< "$images"
