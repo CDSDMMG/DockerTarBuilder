@@ -34,7 +34,7 @@ jobs:
           done
           
     - name: Generate timestamp      
-    id: timestamp
+    id: timestamp 
     run: echo "TIMESTAMP=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
     
     - name: Upload artifact
