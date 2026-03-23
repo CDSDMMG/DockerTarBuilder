@@ -40,6 +40,6 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ steps.timestamp.outputs.image_name }}-amd64-${{ steps.timestamp.outputs.TIMESTAMP }}
+        name: ${{ steps.pull_and_save.outputs.image_name }}-amd64-${{ steps.timestamp.outputs.TIMESTAMP }}
         path: ${{ github.workspace }}/*.tar.gz
         retention-days: 1  # 将保留天数设置为 1 天 最多可设置90天
