@@ -1,0 +1,66 @@
+name: Fetch Immich Models
+
+on:
+  workflow_dispatch:    # Actions 页面手动 Run，想更新模型就来一键
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install deps
+        run: pip install -q huggingface_hub
+
+      - name: 1. Face recognition (buffalo_l)
+        run: |
+          mkdir -p out/buffalo_l/detection out/buffalo_l/recognition
+          python3 - <<'EOF'
+          from huggingface_hub import hf_hub_download
+          import shutil
+          for src, dst in [("det_10g.onnx",   "out/buffalo_l/detection/model.onnx"),
+                           ("w600k_r50.onnx", "out/buffalo_l/recognition/model.onnx")]:
+              shutil.copy(hf_hub_download(repo_id="immich-app/buffalo_l", filename=src, repo_type="model"), dst)
+              print("ok:", src)
+          EOF
+
+      - name: 2. Smart search (CLIP ViT-B-32__openai)
+        run: |
+          mkdir -p out
+          python3 - <<'EOF'
+          from huggingface_hub import snapshot_download
+          import shutil
+          p = snapshot_download(repo_id="immich-app/ViT-B-32__openai", repo_type="model")
+          shutil.copytree(p, "out/ViT-B-32__openai", dirs_exist_ok=True)
+          print("ok: CLIP snapshot")
+          EOF
+
+      - name: 3. OCR (PP-OCRv5_mobile, from ModelScope)
+        run: |
+          mkdir -p out/PP-OCRv5_mobile/detection out/PP-OCRv5_mobile/recognition
+          BASE="https://www.modelscope.cn/models/RapidAI/RapidOCR/resolve/v3.8.0/onnx/PP-OCRv5"
+          curl -fL "$BASE/det/ch_PP-OCRv5_det_mobile.onnx" -o out/PP-OCRv5_mobile/detection/model.onnx
+          curl -fL "$BASE/rec/ch_PP-OCRv5_rec_mobile.onnx" -o out/PP-OCRv5_mobile/recognition/model.onnx
+
+      - name: 4. Checksums
+        run: |
+          cd out
+          find . -name '*.onnx' -type f | sort | xargs sha256sum | tee SHA256SUMS.txt
+
+      - name: 5. README
+        run: |
+          cat > out/README.txt <<'EOF'
+          Immich 官方模型包（runner 直连 huggingface.co / modelscope.cn 下载）
+          解压后按此对应关系覆盖 ML 缓存（${CACHE_LOCATION}）：
+            buffalo_l/         -> facial-recognition/buffalo_l/
+            ViT-B-32__openai/  -> clip/ViT-B-32__openai/
+            PP-OCRv5_mobile/   -> ocr/PP-OCRv5_mobile/
+          校验：sha256sum -c SHA256SUMS.txt
+          生效：docker restart <ML容器>
+          EOF
+
+      - name: 6. Pack & upload
+        run: tar czf immich-models.tar.gz -C out .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: immich-models
+          path: immich-models.tar.gz
+          retention-days: 30
