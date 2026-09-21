@@ -16,10 +16,10 @@ jobs:
           python3 - <<'EOF'
           from huggingface_hub import hf_hub_download
           import shutil
-          for src, dst in [("det_10g.onnx",   "out/buffalo_l/detection/model.onnx"),
-                           ("w600k_r50.onnx", "out/buffalo_l/recognition/model.onnx")]:
-              shutil.copy(hf_hub_download(repo_id="immich-app/buffalo_l", filename=src, repo_type="model"), dst)
-              print("ok:", src)
+          for f in ["detection/model.onnx", "recognition/model.onnx"]:
+              shutil.copy(hf_hub_download(repo_id="immich-app/buffalo_l", filename=f, repo_type="model"),
+                          "out/buffalo_l/" + f)
+              print("ok:", f)
           EOF
 
       - name: 2. Smart search (CLIP ViT-B-32__openai)
